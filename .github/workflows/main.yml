@@ -1,0 +1,40 @@
+name: CMake on multiple platforms
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: clone gtest
+      working-directory: ${{github.workspace}}/libraries
+      run: git clone https://github.com/google/googletest
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          # Windows-specific build command
+          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        else
+          # Linux-specific build command
+          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        fi
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{env.BUILD_TYPE}}
